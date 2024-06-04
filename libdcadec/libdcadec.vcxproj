@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Common.props" />
+  </ImportGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5B5AAF6D-79E0-42AE-8B57-2BEFA8C571F0}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_LIB;_USE_MATH_DEFINES;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="bitstream.h" />
+    <ClInclude Include="common.h" />
+    <ClInclude Include="compiler.h" />
+    <ClInclude Include="core_decoder.h" />
+    <ClInclude Include="core_huffman.h" />
+    <ClInclude Include="core_tables.h" />
+    <ClInclude Include="core_vectors.h" />
+    <ClInclude Include="cos.h" />
+    <ClInclude Include="dca_context.h" />
+    <ClInclude Include="dca_frame.h" />
+    <ClInclude Include="dca_stream.h" />
+    <ClInclude Include="dca_waveout.h" />
+    <ClInclude Include="dmix_tables.h" />
+    <ClInclude Include="exss_parser.h" />
+    <ClInclude Include="fir_fixed.h" />
+    <ClInclude Include="fir_float.h" />
+    <ClInclude Include="fixed_math.h" />
+    <ClInclude Include="huffman.h" />
+    <ClInclude Include="idct.h" />
+    <ClInclude Include="interpolator.h" />
+    <ClInclude Include="lbr_decoder.h" />
+    <ClInclude Include="math_compat.h" />
+    <ClInclude Include="ta.h" />
+    <ClInclude Include="xll_decoder.h" />
+    <ClInclude Include="xll_tables.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="bitstream.c" />
+    <ClCompile Include="core_decoder.c" />
+    <ClCompile Include="cos.c" />
+    <ClCompile Include="dca_context.c" />
+    <ClCompile Include="dca_frame.c" />
+    <ClCompile Include="dca_stream.c" />
+    <ClCompile Include="dca_waveout.c" />
+    <ClCompile Include="dmix_tables.c" />
+    <ClCompile Include="exss_parser.c" />
+    <ClCompile Include="idct_fixed.c" />
+    <ClCompile Include="idct_float.c" />
+    <ClCompile Include="interpolator.c" />
+    <ClCompile Include="interpolator_fixed.c" />
+    <ClCompile Include="interpolator_float.c" />
+    <ClCompile Include="lbr_decoder.c" />
+    <ClCompile Include="math_compat.c" />
+    <ClCompile Include="ta.c" />
+    <ClCompile Include="xll_decoder.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
