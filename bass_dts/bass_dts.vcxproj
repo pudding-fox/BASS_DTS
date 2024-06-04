@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\Common.props" />
+  </ImportGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{72A27AD0-B3E1-4FD5-856D-4744B09B66D8}</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>_USRDLL;BASS_DTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <ModuleDefinitionFile>bass_dts.def</ModuleDefinitionFile>
+      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup Condition="'$(Platform)'=='Win32'">
+    <Library Include="..\lib\x86\bass.lib" />
+    <Library Include="..\lib\x86\libdcadec.lib" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Platform)'=='x64'">
+    <Library Include="..\lib\x64\bass.lib" />
+    <Library Include="..\lib\x64\libdcadec.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\bass\bass.h" />
+    <ClInclude Include="..\bass\bass_addon.h" />
+    <ClInclude Include="..\libdcadec\common.h" />
+    <ClInclude Include="..\libdcadec\compiler.h" />
+    <ClInclude Include="..\libdcadec\dca_context.h" />
+    <ClInclude Include="..\libdcadec\dca_frame.h" />
+    <ClInclude Include="..\libdcadec\ta.h" />
+    <ClInclude Include="bass_dts.h" />
+    <ClInclude Include="buffer.h" />
+    <ClInclude Include="dts_file.h" />
+    <ClInclude Include="dts_stream.h" />
+    <ClInclude Include="pcm.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="bass_dts.c" />
+    <ClCompile Include="buffer.c" />
+    <ClCompile Include="dts_file.c" />
+    <ClCompile Include="dts_stream.c" />
+    <ClCompile Include="pcm.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bass_dts.def" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>
