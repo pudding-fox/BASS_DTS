@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -14,6 +14,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <PreprocessorDefinitions>_USRDLL;BASS_DTS_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>..\bass;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>bass_dts.def</ModuleDefinitionFile>
@@ -30,7 +31,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\bass\bass.h" />
-    <ClInclude Include="..\bass\bass_addon.h" />
+    <ClInclude Include="..\bass\bass-addon.h" />
     <ClInclude Include="..\libdcadec\common.h" />
     <ClInclude Include="..\libdcadec\compiler.h" />
     <ClInclude Include="..\libdcadec\dca_context.h" />

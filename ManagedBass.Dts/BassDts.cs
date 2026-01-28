@@ -7,7 +7,7 @@ namespace ManagedBass.Dts
     {
         const string DllName = "bass_dts";
 
-        public const ChannelType ChannelType = (ChannelType)0x1f200;
+        public const ChannelType ChannelType = (ChannelType)0x1f300;
 
         public static int Module = 0;
 

@@ -1,13 +1,15 @@
 #include "bass_dts.h"
+
 #include "dts_file.h"
 #include "dts_stream.h"
 #include "pcm.h"
 #include "buffer.h"
 
-//2.4.0.0
-#define BASSDTSVERSION 0x02040000
+#include "bass-addon.h"
+const BASS_FUNCTIONS *bassfunc;
 
-#define BASS_CTYPE_MUSIC_DTS 0x1f200
+//2.4.1.0
+#define BASSDTSVERSION 0x02040100
 
 //I have no idea how to prevent linking against this routine in msvcrt.
 //It doesn't exist on Windows XP.
@@ -16,7 +18,14 @@ int _except_handler4_common() {
 	return 0;
 }
 
-extern const ADDON_FUNCTIONS addon_functions;
+HSTREAM WINAPI BASS_DTS_StreamCreate(BASSFILE file, DWORD flags);
+DWORD WINAPI BASS_DTS_StreamProc(HSTREAM handle, void* buffer, DWORD length, void* user);
+BOOL WINAPI BASS_DTS_StreamWrite(HSTREAM handle, void* buffer, DWORD* position, DWORD* remaining, void* user);
+QWORD WINAPI BASS_DTS_GetLength(void* inst, DWORD mode);
+VOID WINAPI BASS_DTS_GetInfo(void* inst, BASS_CHANNELINFO* info);
+BOOL WINAPI BASS_DTS_CanSetPosition(void* inst, QWORD position, DWORD mode);
+QWORD WINAPI BASS_DTS_SetPosition(void* inst, QWORD position, DWORD mode);
+VOID WINAPI BASS_DTS_Free(void* inst);
 
 //We just privode the minimum functions, the NULL slots are optional.
 const ADDON_FUNCTIONS addon_functions = {
@@ -37,12 +46,12 @@ const ADDON_FUNCTIONS addon_functions = {
 };
 
 static const BASS_PLUGINFORM plugin_form[] = {
-	{ BASS_CTYPE_MUSIC_DTS, "DTS file", "*.dts" }
+	{ BASS_CTYPE_STREAM_DTS, "DTS", "*.dts" }
 };
 
 static const BASS_PLUGININFO plugin_info = { BASSDTSVERSION, 1, plugin_form };
 
-BOOL BASSDTSDEF(DllMain)(HANDLE dll, DWORD reason, LPVOID reserved) {
+BOOL WINAPI DllMain(HANDLE dll, DWORD reason, LPVOID reserved) {
 	switch (reason) {
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls((HMODULE)dll);
@@ -55,7 +64,7 @@ BOOL BASSDTSDEF(DllMain)(HANDLE dll, DWORD reason, LPVOID reserved) {
 	return TRUE;
 }
 
-const VOID* BASSDTSDEF(BASSplugin)(DWORD face) {
+const VOID* WINAPI BASSplugin(DWORD face) {
 	switch (face) {
 	case BASSPLUGIN_INFO:
 		return (void*)&plugin_info;
@@ -65,11 +74,11 @@ const VOID* BASSDTSDEF(BASSplugin)(DWORD face) {
 	return NULL;
 }
 
-HSTREAM BASSDTSDEF(BASS_DTS_StreamCreate)(BASSFILE file, DWORD flags) {
+HSTREAM WINAPI BASS_DTS_StreamCreate(BASSFILE file, DWORD flags) {
 	HSTREAM handle;
 	DTS_STREAM* dts_stream;
 	if (!dts_stream_create(file, 0, &dts_stream)) {
-		return 0;
+		error(BASS_ERROR_FILEFORM);
 	}
 	if (flags & BASS_SAMPLE_FLOAT) {
 		dts_stream->output_format.bits_per_sample = sizeof(float) * 8;
@@ -83,8 +92,7 @@ HSTREAM BASSDTSDEF(BASS_DTS_StreamCreate)(BASSFILE file, DWORD flags) {
 	if (!(dts_stream->write_sample = pcm_write_sample(dts_stream->input_format, dts_stream->output_format))) {
 		//Sample conversion is not implemented :c
 		dts_stream_free(dts_stream);
-		errorn(BASS_ERROR_NOTAVAIL);
-		return 0;
+		error(BASS_ERROR_FORMAT);
 	}
 
 	handle = bassfunc->CreateStream(
@@ -100,12 +108,13 @@ HSTREAM BASSDTSDEF(BASS_DTS_StreamCreate)(BASSFILE file, DWORD flags) {
 		return 0;
 	}
 
-	return handle;
+	bassfunc->file.SetStream(file, handle);
+	noerrorn(handle);
 }
 
-HSTREAM BASSDTSDEF(BASS_DTS_StreamCreateFile)(BOOL mem, const void* file, QWORD offset, QWORD length, DWORD flags) {
+HSTREAM WINAPI BASS_DTS_StreamCreateFile(DWORD filetype, const void* file, QWORD offset, QWORD length, DWORD flags) {
 	HSTREAM handle;
-	BASSFILE bass_file = bassfunc->file.Open(mem, file, offset, length, flags, FALSE);
+	BASSFILE bass_file = bassfunc->file.Open(filetype, file, offset, length, flags, BASSFILE_EX_TAGS);
 	if (!bass_file) {
 		return 0;
 	}
@@ -114,11 +123,26 @@ HSTREAM BASSDTSDEF(BASS_DTS_StreamCreateFile)(BOOL mem, const void* file, QWORD 
 		bassfunc->file.Close(bass_file);
 		return 0;
 	}
-	bassfunc->file.SetStream(bass_file, handle);
 	return handle;
 }
 
-DWORD BASSDTSDEF(BASS_DTS_StreamProc)(HSTREAM handle, void* buffer, DWORD length, void* user) {
+HSTREAM WINAPI BASS_DTS_StreamCreateFileUser(DWORD system, DWORD flags, const BASS_FILEPROCS *procs, void *user) {
+	HSTREAM handle;
+	BASSFILE bass_file;
+	if (system != STREAMFILE_NOBUFFER) error(BASS_ERROR_ILLPARAM); // no buffered streaming
+	bass_file = bassfunc->file.OpenUser(system, flags, procs, user, BASSFILE_EX_TAGS);
+	if (!bass_file) {
+		return 0;
+	}
+	handle = BASS_DTS_StreamCreate(bass_file, flags);
+	if (!handle) {
+		bassfunc->file.Close(bass_file);
+		return 0;
+	}
+	return handle;
+}
+
+DWORD WINAPI BASS_DTS_StreamProc(HSTREAM handle, void* buffer, DWORD length, void* user) {
 	DTS_STREAM* dts_stream = user;
 	DWORD position = 0;
 	DWORD remaining = length;
@@ -139,7 +163,7 @@ DWORD BASSDTSDEF(BASS_DTS_StreamProc)(HSTREAM handle, void* buffer, DWORD length
 	return length - remaining;
 }
 
-BOOL BASSDTSDEF(BASS_DTS_StreamWrite)(HSTREAM handle, void* buffer, DWORD* position, DWORD* remaining, void* user) {
+BOOL WINAPI BASS_DTS_StreamWrite(HSTREAM handle, void* buffer, DWORD* position, DWORD* remaining, void* user) {
 	DTS_STREAM* dts_stream = user;
 	//length = the amount of data from the current decodeded samples available.
 	DWORD length =
@@ -162,7 +186,7 @@ BOOL BASSDTSDEF(BASS_DTS_StreamWrite)(HSTREAM handle, void* buffer, DWORD* posit
 	return TRUE;
 }
 
-QWORD BASSDTSDEF(BASS_DTS_GetLength)(void* inst, DWORD mode) {
+QWORD WINAPI BASS_DTS_GetLength(void* inst, DWORD mode) {
 	DTS_STREAM* dts_stream = inst;
 	QWORD position;
 	if (mode == BASS_POS_BYTE) {
@@ -172,34 +196,30 @@ QWORD BASSDTSDEF(BASS_DTS_GetLength)(void* inst, DWORD mode) {
 			dts_stream->input_format.samples_per_frame *
 			dts_stream->output_format.bytes_per_sample *
 			dts_stream->channel_count;
-		return position;
+		noerrorn(position);
 	}
 	else {
 		errorn(BASS_ERROR_NOTAVAIL);
-		return 0;
 	}
 }
 
-VOID BASSDTSDEF(BASS_DTS_GetInfo)(void* inst, BASS_CHANNELINFO* info) {
+VOID WINAPI BASS_DTS_GetInfo(void* inst, BASS_CHANNELINFO* info) {
 	DTS_STREAM* dts_stream = inst;
-	info->ctype = BASS_CTYPE_MUSIC_DTS;
-	info->freq = dts_stream->sample_rate;
-	info->chans = dts_stream->channel_count;
+	info->ctype = BASS_CTYPE_STREAM_DTS;
 	info->origres = dts_stream->input_format.bits_per_sample;
 }
 
-BOOL BASSDTSDEF(BASS_DTS_CanSetPosition)(void* inst, QWORD position, DWORD mode) {
+BOOL WINAPI BASS_DTS_CanSetPosition(void* inst, QWORD position, DWORD mode) {
 	if (mode == BASS_POS_BYTE) {
 		//Because we're always file backed the position should always be valid.
 		return TRUE;
 	}
 	else {
-		errorn(BASS_ERROR_NOTAVAIL);
-		return 0;
+		error(BASS_ERROR_NOTAVAIL);
 	}
 }
 
-QWORD BASSDTSDEF(BASS_DTS_SetPosition)(void* inst, QWORD position, DWORD mode) {
+QWORD WINAPI BASS_DTS_SetPosition(void* inst, QWORD position, DWORD mode) {
 	DTS_STREAM* dts_stream = inst;
 	if (mode == BASS_POS_BYTE) {
 		//Not sure why we divide by the number of channels but nothing else.
@@ -217,10 +237,9 @@ QWORD BASSDTSDEF(BASS_DTS_SetPosition)(void* inst, QWORD position, DWORD mode) {
 		}
 	}
 	errorn(BASS_ERROR_NOTAVAIL);
-	return 0;
 }
 
-VOID BASSDTSDEF(BASS_DTS_Free)(void* inst) {
+VOID WINAPI BASS_DTS_Free(void* inst) {
 	DTS_STREAM* dts_stream = inst;
 	dts_stream_free(dts_stream);
 }
