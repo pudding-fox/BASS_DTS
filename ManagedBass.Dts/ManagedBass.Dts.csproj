@@ -4,7 +4,7 @@
 		<TargetFrameworks>net40;net461</TargetFrameworks>
 		<AssemblyName>ManagedBass.Dts</AssemblyName>
 		<OutputPath>..\distribution\</OutputPath>
-		<Version>0.2.1</Version>
+		<Version>0.3.0</Version>
 		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
@@ -12,7 +12,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<IncludeSymbols>true</IncludeSymbols>
-		<RepositoryUrl>https://github.com/aidan-g/BASS_DTS.git</RepositoryUrl>
+		<RepositoryUrl>https://github.com/pudding-fox/BASS_DTS</RepositoryUrl>
 		<RepositoryType>git</RepositoryType>
 	</PropertyGroup>
 
