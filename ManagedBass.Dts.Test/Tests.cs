@@ -6,25 +6,28 @@ using System.Threading;
 
 namespace ManagedBass.Dts.Test
 {
-    [TestFixture(BassFlags.Default, @"..\..\Media\01 In Chains.dts")]
-    [TestFixture(BassFlags.Default, @"..\..\Media\01 All Night Long.dts")]
-    [TestFixture(BassFlags.Default, @"..\..\Media\01 World In My Eyes.dts")]
-    [TestFixture(BassFlags.Default | BassFlags.Float, @"..\..\Media\01 In Chains.dts")]
-    [TestFixture(BassFlags.Default | BassFlags.Float, @"..\..\Media\01 All Night Long.dts")]
-    [TestFixture(BassFlags.Default | BassFlags.Float, @"..\..\Media\01 World In My Eyes.dts")]
+    [TestFixture(BassFlags.Default, @"..\..\Media\01 In Chains.dts", 412.661)]
+    [TestFixture(BassFlags.Default, @"..\..\Media\01 All Night Long.dts", 167.027)]
+    [TestFixture(BassFlags.Default, @"..\..\Media\01 World In My Eyes.dts", 266.613)]
+    [TestFixture(BassFlags.Default | BassFlags.Float, @"..\..\Media\01 In Chains.dts", 412.661)]
+    [TestFixture(BassFlags.Default | BassFlags.Float, @"..\..\Media\01 All Night Long.dts", 167.027)]
+    [TestFixture(BassFlags.Default | BassFlags.Float, @"..\..\Media\01 World In My Eyes.dts", 266.613)]
     public class Tests
     {
         private static readonly string CurrentDirectory = Path.GetDirectoryName(typeof(Tests).Assembly.Location);
 
-        public Tests(BassFlags bassFlags, string fileName)
+        public Tests(BassFlags bassFlags, string fileName, double length)
         {
             this.BassFlags = bassFlags;
             this.FileName = fileName;
+            this.Length = length;
         }
 
         public BassFlags BassFlags { get; private set; }
 
         public string FileName { get; private set; }
+
+        public double Length { get; private set; }
 
         [SetUp]
         public void SetUp()
@@ -158,6 +161,8 @@ namespace ManagedBass.Dts.Test
 
             var channelLength = Bass.ChannelGetLength(sourceChannel);
             var channelLengthSeconds = Bass.ChannelBytes2Seconds(sourceChannel, channelLength);
+
+            Assert.AreEqual(Math.Floor(this.Length), Math.Floor(channelLengthSeconds));
 
             if (!Bass.StreamFree(sourceChannel))
             {

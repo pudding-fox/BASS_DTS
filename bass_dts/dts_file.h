@@ -10,8 +10,14 @@ typedef struct {
 	UINT sync_word;
 } DTS_FRAME;
 
+typedef enum {
+	DTS_CONTAINER_NONE,
+	DTS_CONTAINER_WAVE
+} DTS_CONTAINER;
+
 typedef struct {
 	BOOL initialized;
+	DTS_CONTAINER container;
 	QWORD frame_count;
 	QWORD length;
 	QWORD start;

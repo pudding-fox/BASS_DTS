@@ -48,6 +48,32 @@ static BOOL dts_file_read_required(const DTS_FILE* const dts_file, void* buffer,
 	return bassfunc->file.Read(dts_file->bass_file, buffer, length) == length;
 }
 
+typedef struct {
+	char riff[4];
+	int size;
+	char wave[4];
+} WAVE_HEADER;
+
+static DTS_CONTAINER dts_file_container(const DTS_FILE* const dts_file) {
+
+	WAVE_HEADER header;
+	char riff[] = "RIFF";
+	char wave[] = "WAVE";
+
+	bassfunc->file.Seek(dts_file->bass_file, 0);
+	if (!dts_file_read_required(dts_file, &header, sizeof(WAVE_HEADER))) {
+		return DTS_CONTAINER_NONE;
+	}
+	bassfunc->file.Seek(dts_file->bass_file, 0);
+
+	if (strncmp(header.riff, riff, sizeof(header.riff)) == 0 && strncmp(header.wave, wave, sizeof(header.wave)) == 0) {
+		return DTS_CONTAINER_WAVE;
+	}
+	else {
+		return DTS_CONTAINER_NONE;
+	}
+}
+
 BOOL dts_file_create(const BASSFILE bass_file, DTS_FILE** const dts_file) {
 	*dts_file = ta_znew(NULL, DTS_FILE);
 	if (!*dts_file) {
@@ -56,6 +82,7 @@ BOOL dts_file_create(const BASSFILE bass_file, DTS_FILE** const dts_file) {
 	}
 
 	(*dts_file)->bass_file = bass_file;
+	(*dts_file)->info.container = dts_file_container(*dts_file);
 	(*dts_file)->info.length = bassfunc->file.GetPos(bass_file, BASS_FILEPOS_END);
 
 	if (!((*dts_file)->frame.buffer = ta_zalloc_size(*dts_file, BUFFER_ALIGN * 2))) {
@@ -216,6 +243,7 @@ BOOL dts_file_read(DTS_FILE* const dts_file) {
 	//Attempt to read a new frame (including extended info) from the file.
 
 	int result;
+	size_t frame_size;
 
 	dts_file->frame.size = 0;
 
@@ -247,10 +275,16 @@ BOOL dts_file_read(DTS_FILE* const dts_file) {
 	}
 
 	if (!dts_file->info.initialized) {
+		if (dts_file->info.container == DTS_CONTAINER_WAVE) {
+			frame_size = dts_file_align(dts_file->frame.size);
+		}
+		else {
+			frame_size = dts_file->frame.size;
+		}
 		//This is not 100% accurate.
 		//There appears to be some additional data in the file after the first frame which isn't actual frame data.
 		dts_file->info.frame_count =
-			(dts_file->info.length - dts_file->info.start) / dts_file_align(dts_file->frame.size);
+			(dts_file->info.length - dts_file->info.start) / frame_size;
 		dts_file->info.initialized = TRUE;
 	}
 
