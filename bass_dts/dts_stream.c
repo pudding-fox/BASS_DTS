@@ -135,6 +135,36 @@ BOOL dts_stream_reset(DTS_STREAM* const stream, BOOL clear_context) {
 	return TRUE;
 }
 
+BOOL dts_stream_can_seek(DTS_STREAM* const stream, const QWORD position) {
+	return position >= 0 && position <= dts_stream_length(stream);
+}
+
+BOOL dts_stream_seek(DTS_STREAM* const stream, const QWORD position) {
+	DOUBLE offset;
+	QWORD file_length = dts_file_length(stream->dts_file);
+	QWORD stream_length = dts_stream_length(stream);
+	//If the position is start or end, use exact values.
+	if (position == 0) {
+		dts_file_seek(stream->dts_file, 0);
+	}
+	else if (position == stream_length) {
+		return dts_file_seek(stream->dts_file, file_length);
+	}
+	else {
+		//offset = position * ratio of file to stream length.
+		offset = position * ((DOUBLE)file_length / stream_length);
+		return dts_file_seek(stream->dts_file, stream->dts_file->info.start + (QWORD)offset);
+	}
+}
+
+QWORD dts_stream_length(DTS_STREAM* const stream) {
+	QWORD offset = stream->dts_file->info.frame_count *
+		stream->input_format.samples_per_frame *
+		stream->output_format.bytes_per_sample *
+		stream->channel_count;
+	return offset;
+}
+
 BOOL dts_stream_free(DTS_STREAM* const stream) {
 	dts_file_free(stream->dts_file);
 	if (stream->dcadec_context) {

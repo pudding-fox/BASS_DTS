@@ -35,4 +35,10 @@ DWORD dts_stream_read(DTS_STREAM* const stream, void* buffer, const DWORD length
 
 BOOL dts_stream_reset(DTS_STREAM* const stream, BOOL clear_context);
 
+BOOL dts_stream_can_seek(DTS_STREAM* const stream, const QWORD position);
+
+BOOL dts_stream_seek(DTS_STREAM* const stream, const QWORD position);
+
+QWORD dts_stream_length(const DTS_STREAM* const stream);
+
 BOOL dts_stream_free(DTS_STREAM* const stream);

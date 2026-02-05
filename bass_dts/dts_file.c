@@ -315,37 +315,24 @@ retry:
 	return TRUE;
 }
 
-BOOL dts_file_seek(DTS_FILE* const dts_file, const QWORD position, const DTS_FILE_SEEK mode) {
-	QWORD offset = position;
-	switch (mode) {
-	case DTS_FILE_SEEK_BEGIN:
-		//Seek to the beginning of the file.
-		offset += bassfunc->file.GetPos(dts_file->bass_file, BASS_FILEPOS_START);
-		if (!bassfunc->file.Seek(dts_file->bass_file, offset)) {
-			//Failed to seek for some reason.
-			return FALSE;
-		}
-		break;
-	case DTS_FILE_SEEK_POSITION:
-		//Seek to a specific position in the file.
-		if (!bassfunc->file.Seek(dts_file->bass_file, position)) {
-			//Failed to seek for some reason.
-			return FALSE;
-		}
-		//After seeking we must synchronize the stream to the start of the next core sync word.
-		if (!dts_file_synchronize(dts_file)) {
-			//Failed to synchronize for some reason.
-			return FALSE;
-		}
-		break;
-	case DTS_FILE_SEEK_END:
-		//Seek to the end of the file.
-		offset += bassfunc->file.GetPos(dts_file->bass_file, BASS_FILEPOS_END);
-		if (!bassfunc->file.Seek(dts_file->bass_file, offset)) {
-			//Failed to seek for some reason.
-			return FALSE;
-		}
-		break;
+BOOL dts_file_can_seek(DTS_FILE* const dts_file, const QWORD position) {
+	return position >= 0 && position <= dts_file_length(dts_file);
+}
+
+BOOL dts_file_seek(DTS_FILE* const dts_file, const QWORD position) {
+	//Seek to a specific position in the file.
+	if (!bassfunc->file.Seek(dts_file->bass_file, position)) {
+		//Failed to seek for some reason.
+		return FALSE;
+	}
+	if (position == dts_file_length(dts_file)) {
+		//Seeking to the end of the file, nothing else to do.
+		return TRUE;
+	}
+	//After seeking we must synchronize the stream to the start of the next core sync word.
+	if (!dts_file_synchronize(dts_file)) {
+		//Failed to synchronize for some reason.
+		return FALSE;
 	}
 	//Discard the current sync word.
 	dts_file->frame.sync_word = 0;

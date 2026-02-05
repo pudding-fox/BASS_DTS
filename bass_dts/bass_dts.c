@@ -6,7 +6,7 @@
 #include "buffer.h"
 
 #include "bass-addon.h"
-const BASS_FUNCTIONS *bassfunc;
+const BASS_FUNCTIONS* bassfunc;
 
 //2.4.1.0
 #define BASSDTSVERSION 0x02040100
@@ -126,7 +126,7 @@ HSTREAM WINAPI BASS_DTS_StreamCreateFile(DWORD filetype, const void* file, QWORD
 	return handle;
 }
 
-HSTREAM WINAPI BASS_DTS_StreamCreateFileUser(DWORD system, DWORD flags, const BASS_FILEPROCS *procs, void *user) {
+HSTREAM WINAPI BASS_DTS_StreamCreateFileUser(DWORD system, DWORD flags, const BASS_FILEPROCS* procs, void* user) {
 	HSTREAM handle;
 	BASSFILE bass_file;
 	if (system != STREAMFILE_NOBUFFER) error(BASS_ERROR_ILLPARAM); // no buffered streaming
@@ -188,15 +188,8 @@ BOOL WINAPI BASS_DTS_StreamWrite(HSTREAM handle, void* buffer, DWORD* position, 
 
 QWORD WINAPI BASS_DTS_GetLength(void* inst, DWORD mode) {
 	DTS_STREAM* dts_stream = inst;
-	QWORD position;
 	if (mode == BASS_POS_BYTE) {
-		//This is *almost* correct. The frame_count is not quite right which throws this off.
-		position =
-			dts_stream->dts_file->info.frame_count *
-			dts_stream->input_format.samples_per_frame *
-			dts_stream->output_format.bytes_per_sample *
-			dts_stream->channel_count;
-		noerrorn(position);
+		noerrorn(dts_stream_length(dts_stream));
 	}
 	else {
 		errorn(BASS_ERROR_NOTAVAIL);
@@ -210,9 +203,9 @@ VOID WINAPI BASS_DTS_GetInfo(void* inst, BASS_CHANNELINFO* info) {
 }
 
 BOOL WINAPI BASS_DTS_CanSetPosition(void* inst, QWORD position, DWORD mode) {
+	DTS_STREAM* dts_stream = inst;
 	if (mode == BASS_POS_BYTE) {
-		//Because we're always file backed the position should always be valid.
-		return TRUE;
+		return dts_stream_can_seek(dts_stream, position);
 	}
 	else {
 		error(BASS_ERROR_NOTAVAIL);
@@ -222,15 +215,7 @@ BOOL WINAPI BASS_DTS_CanSetPosition(void* inst, QWORD position, DWORD mode) {
 QWORD WINAPI BASS_DTS_SetPosition(void* inst, QWORD position, DWORD mode) {
 	DTS_STREAM* dts_stream = inst;
 	if (mode == BASS_POS_BYTE) {
-		//Not sure why we divide by the number of channels but nothing else.
-		QWORD offset = position / dts_stream->channel_count;
-		//I have no fucking clue why BASS sometimes sends a position that is twice the size it should be.
-		//No fucking clue.
-		if (offset > dts_stream->dts_file->info.length) {
-			offset /= 2;
-		}
-		if (dts_file_seek(dts_stream->dts_file, offset, DTS_FILE_SEEK_POSITION)) {
-			//If the seek succeeded then throw away any already decoded samples.
+		if (dts_stream_seek(dts_stream, position)) {
 			if (dts_stream_reset(dts_stream, TRUE)) {
 				return position;
 			}
