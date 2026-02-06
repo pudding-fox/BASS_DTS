@@ -145,7 +145,7 @@ BOOL dts_stream_seek(DTS_STREAM* const stream, const QWORD position) {
 	QWORD stream_length = dts_stream_length(stream);
 	//If the position is start or end, use exact values.
 	if (position == 0) {
-		dts_file_seek(stream->dts_file, 0);
+		return dts_file_seek(stream->dts_file, 0);
 	}
 	else if (position == stream_length) {
 		return dts_file_seek(stream->dts_file, file_length);
