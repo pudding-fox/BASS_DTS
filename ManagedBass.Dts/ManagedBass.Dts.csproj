@@ -4,7 +4,7 @@
 		<TargetFrameworks>net40;net461</TargetFrameworks>
 		<AssemblyName>ManagedBass.Dts</AssemblyName>
 		<OutputPath>..\distribution\</OutputPath>
-		<Version>0.3.0</Version>
+		<Version>0.5.0</Version>
 		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
